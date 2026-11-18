@@ -12,7 +12,6 @@ from session_reports import (
     pages, require, resolve_pr, unique_json,
 )
 
-MARKER = "<!-- prototype-pr-scores:"
 ISSUE_FIELDS = {"risk": 50094621, "slop": 50094622}
 MAX_DIFF_BYTES = 200000
 RUBRIC_VERSION = 2
@@ -173,37 +172,12 @@ Do not mention API or function names; translate them, such as "may need a newer 
 
 
 def summary(assessment):
-    return ("| Smart label | Score | Why |\n| --- | --- | --- |\n"
+    return ("| Issue Field | Score | Why |\n| --- | --- | --- |\n"
             + "\n".join(f"| {name.title()} | {assessment[name]['score']}/100 | "
                         f"{assessment[name]['why']} |" for name in ("risk", "slop")))
 
 
 def publish(number, sha, assessment, request=api):
-    comments = [row for row in pages(f"repos/{REPOSITORY}/issues/{number}/comments", request)
-                if row.get("user", {}).get("login") == "github-actions[bot]"
-                and row.get("user", {}).get("type") == "Bot"
-                and (row.get("body") or "").startswith(MARKER)]
-    require(len(comments) <= 1, "Multiple smart-label publications require reconciliation")
-    history = []
-    if comments:
-        body = comments[0]["body"]
-        end = body.find(" -->")
-        require(end >= len(MARKER), "Invalid retained score marker")
-        retained = unique_json(body[len(MARKER):end])
-        require(retained.get("schemaVersion") == 1
-                and isinstance(retained.get("assessments"), list),
-                "Invalid retained score history")
-        history = retained["assessments"]
-    history = [row for row in history
-               if not (row["runId"] == assessment["runId"]
-                       and row["runAttempt"] == assessment["runAttempt"])]
-    history = (history + [assessment])[-40:]
-    body = (MARKER + json.dumps({"schemaVersion": 1, "assessments": history},
-                               separators=(",", ":")) + " -->\n"
-            "## PR smart labels\n\n" + summary(assessment)
-            + f"\n\nHead: `{sha}` · [Copilot CI]({assessment['runUrl']})"
-            "\n\nLower is better; review estimates, not measured probabilities. Diff only.")
-    require(len(body) <= 65000, "Score history exceeds GitHub comment limit")
     current = current_pr(number, sha, request)
     require(current["base"]["sha"] == assessment["baseSha"],
             "PR base changed; refusing stale publication")
@@ -222,9 +196,6 @@ def publish(number, sha, assessment, request=api):
     current = current_pr(number, sha, request)
     require(current["base"]["sha"] == assessment["baseSha"],
             "PR base changed after Issue Field publication")
-    path = (f"repos/{REPOSITORY}/issues/comments/{comments[0]['id']}" if comments
-            else f"repos/{REPOSITORY}/issues/{number}/comments")
-    request(path, "PATCH" if comments else "POST", {"body": body})
 
 
 def run(request=api, reviewer=copilot):
@@ -253,7 +224,7 @@ def run(request=api, reviewer=copilot):
             "writingSources": WRITING_SOURCES,
             "rubricVersion": RUBRIC_VERSION,
         }
-        print("Publishing numeric Issue Fields and head-bound assessment history.")
+        print("Publishing numeric Issue Fields.")
         publish(number, sha, assessment, request)
         request(f"repos/{REPOSITORY}/check-runs/{check['id']}", "PATCH",
                 {"status": "completed", "conclusion": "success",

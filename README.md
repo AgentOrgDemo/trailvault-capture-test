@@ -56,7 +56,7 @@ Supporting examples, test fixtures, and integrated static pages are not penalize
 just for being demos or HTML; static features do not require a backend.
 Only integration evidence visible in the diff is assessed, without inventing
 requirements or claiming unseen code is absent. Published assessments retain
-`rubricVersion` so rubric changes remain distinguishable in score history.
+`rubricVersion` internally; the workflow run identifies the trusted evaluator.
 
 The CI applies the simplified-English and repetition-removal principles from
 [aidr](https://github.com/JasonMore/ai-skills/blob/9960f13e2892b675787552ed867bb9f9728211bd/skills/aidr/SKILL.md)
@@ -67,31 +67,32 @@ executed at runtime. After scoring, a focused Copilot copy-edit pass simplifies
 only the explanations; validation prevents it from changing either score.
 Each explanation gives one main reason in at most 25 words
 and 180 visible characters, without changing the evidence or its uncertainty.
-Plain text is preferred; optional inline Markdown is rendered by the prototype's
-sanitized Markdown renderer. HTML, links, block formatting, and line breaks are
-rejected. Assessment metadata retains the pinned writing-source URLs. Older
-published explanations remain readable in history.
+Plain text is preferred; optional inline Markdown appears only in the check
+summary. HTML, links, block formatting, and line breaks are rejected. Trusted
+configuration retains the pinned writing-source URLs.
 
 The analyzer verifies all changed files and additions/deletions, rejects binary,
 truncated, or over-200,000-byte diffs, and rechecks the head and base before
 publication. Incomplete evidence is unassessed, never a zero score. Malformed
 model output gets one schema-guided retry, then fails explicitly. Scores appear
-in the head-bound **PR smart labels** check and one updated Actions-bot comment,
-using the `prototype-pr-scores` envelope. It retains the latest 40 assessments
-with immutable PR/head/base, run/attempt, evaluator SHA, model, and timestamp.
+in the head-bound **PR smart labels** check and the native Issue Fields.
+The publisher never reads, parses, creates, or updates score comments.
+Old comments are not consulted, so malformed or duplicate historical
+publications cannot block new field values.
 Risk (field ID `50094621`) and Slop (field ID `50094622`) are public numeric
 Issue Fields defined in AgentOrgDemo, with values from 0 to 100. No issue type
 is required. Each successful assessment POSTs only these two values, preserving
 unrelated Issue Fields, and verifies GitHub's response before publishing its
-comment/check success. Workflow `issues: write` permission supplies value access;
+check success. Workflow `issues: write` permission supplies value access;
 field creation is a separate organization-admin setup operation.
 
-The prototype reads current values from Issue Fields, with the existing
-smart-label/history treatment in both PR headers and list rows. Clicking a field
-in the local prototype saves its numeric value to GitHub. Comments retain
-recorded CI history and explanations, including pre-transfer provenance;
-manual edits do not invent CI observations or reuse an explanation for a
-different score. Native GitHub labels are not overwritten.
+The prototype reads values exclusively from Issue Fields in both PR headers
+and list rows. Clicking a field in the local prototype saves its numeric value
+to GitHub. No comment-backed history, Why hovercards, artifact-backed metric
+labels, synthetic scores, or cache-only corrections remain. History and Why
+are omitted until a verified native field source can supply them. Old score
+comments are left untouched as ordinary conversation, not used as field data.
+Native GitHub labels and unrelated session-report comments are not overwritten.
 
 Manual rerun:
 

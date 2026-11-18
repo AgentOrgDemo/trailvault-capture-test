@@ -1,4 +1,3 @@
-import copy
 import json
 import os
 import re
@@ -177,10 +176,11 @@ class SmartLabelTests(unittest.TestCase):
                                  "deletions": 0, "changes": 0}])
         self.assertEqual(json.loads(diff)[0]["previousPath"], "old")
 
-    def publish(self, comments=None, current=None, field_result=None):
+    def publish(self, current=None, field_result=None):
         writes = []
 
         def request(path, method="GET", body=None):
+            self.assertNotIn("/comments", path)
             if method != "GET":
                 writes.append((path, method, body))
                 if path.endswith("/issue-field-values"):
@@ -188,41 +188,26 @@ class SmartLabelTests(unittest.TestCase):
                         {"issue_field_id": row["field_id"], "data_type": "number", "value": row["value"]}
                         for row in body["issue_field_values"]]
                 return {}
-            if "/comments?" in path:
-                return comments or []
             return current if current is not None else pr()
 
         labels.publish(1, HEAD, assessment(), request)
         return writes
 
-    def test_one_comment_reused_and_no_native_github_labels_overwritten(self):
+    def test_only_issue_fields_written_without_reading_or_writing_comments(self):
         writes = self.publish()
+        self.assertEqual(len(writes), 1)
         fields_path, fields_method, fields_payload = writes[0]
         self.assertTrue(fields_path.endswith("/issues/1/issue-field-values"))
         self.assertEqual(fields_method, "POST")
         self.assertEqual(fields_payload, {"issue_field_values": [
             {"field_id": 50094621, "value": 35}, {"field_id": 50094622, "value": 12}]})
-        path, method, payload = writes[1]
-        self.assertTrue(path.endswith("/issues/1/comments"))
-        self.assertEqual(method, "POST")
-        self.assertIn("| Risk | 35/100 |", payload["body"])
-        comment = {"id": 9, "user": {"login": "github-actions[bot]", "type": "Bot"},
-                   "body": payload["body"]}
-        writes = self.publish([comment])
-        self.assertEqual(writes[1][1], "PATCH")
-        self.assertTrue(writes[1][0].endswith("/issues/comments/9"))
-        retained = labels.unique_json(writes[1][2]["body"][len(labels.MARKER):].split(" -->")[0])
-        self.assertEqual(len(retained["assessments"]), 1)
 
-    def test_unconfirmed_fields_fail_without_publishing_success_shaped_history(self):
+    def test_unconfirmed_fields_fail_without_reporting_success(self):
         for result in ([], {}, [{"issue_field_id": 50094621, "data_type": "number", "value": 99}]):
             with self.subTest(result=result), self.assertRaisesRegex(ReportError, "did not confirm"):
                 self.publish(field_result=result)
 
-    def test_human_spoof_ignored_and_stale_publication_rejected(self):
-        spoof = {"user": {"login": "human", "type": "User"},
-                 "body": labels.MARKER + "bad"}
-        self.assertEqual(self.publish([spoof])[0][1], "POST")
+    def test_stale_publication_rejected(self):
         stale = pr()
         stale["head"]["sha"] = "d" * 40
         with self.assertRaises(ReportError):
@@ -231,14 +216,6 @@ class SmartLabelTests(unittest.TestCase):
         stale["base"]["sha"] = "d" * 40
         with self.assertRaises(ReportError):
             self.publish(current=stale)
-
-    def test_duplicate_or_corrupt_bot_publications_rejected(self):
-        comment = {"user": {"login": "github-actions[bot]", "type": "Bot"},
-                   "body": labels.MARKER + "broken"}
-        with self.assertRaises(ReportError):
-            self.publish([comment, copy.deepcopy(comment)])
-        with self.assertRaises(ReportError):
-            self.publish([comment])
 
     def test_run_publishes_scores_and_failure_is_explicit(self):
         for failure in (None, labels.IncompleteDiff("Incomplete"), ReportError("Model failed")):
