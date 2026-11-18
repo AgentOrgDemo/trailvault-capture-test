@@ -11,7 +11,7 @@ import tempfile
 from datetime import datetime, timezone
 from urllib.parse import urlencode
 
-REPOSITORY = "madsbolaris/trailvault-capture-test"
+REPOSITORY = "AgentOrgDemo/trailvault-capture-test"
 REPORTS = {"agent-behavior": "Agent behavior", "human-decisions": "Human decisions"}
 MARKER = "<!-- prototype-artifact:"
 FINDING_MARKER = "<!-- session-report-finding:"

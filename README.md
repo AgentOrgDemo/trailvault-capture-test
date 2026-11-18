@@ -79,14 +79,24 @@ model output gets one schema-guided retry, then fails explicitly. Scores appear
 in the head-bound **PR smart labels** check and one updated Actions-bot comment,
 using the `prototype-pr-scores` envelope. It retains the latest 40 assessments
 with immutable PR/head/base, run/attempt, evaluator SHA, model, and timestamp.
-The prototype renders current-head scores and their Why using the existing
-smart-label/history treatment in both PR headers and list rows. Native GitHub
-labels are not overwritten.
+Risk (field ID `50094621`) and Slop (field ID `50094622`) are public numeric
+Issue Fields defined in AgentOrgDemo, with values from 0 to 100. No issue type
+is required. Each successful assessment POSTs only these two values, preserving
+unrelated Issue Fields, and verifies GitHub's response before publishing its
+comment/check success. Workflow `issues: write` permission supplies value access;
+field creation is a separate organization-admin setup operation.
+
+The prototype reads current values from Issue Fields, with the existing
+smart-label/history treatment in both PR headers and list rows. Clicking a field
+in the local prototype saves its numeric value to GitHub. Comments retain
+recorded CI history and explanations, including pre-transfer provenance;
+manual edits do not invent CI observations or reuse an explanation for a
+different score. Native GitHub labels are not overwritten.
 
 Manual rerun:
 
 ```sh
-gh workflow run pr-smart-labels.yml --repo madsbolaris/trailvault-capture-test \
+gh workflow run pr-smart-labels.yml --repo AgentOrgDemo/trailvault-capture-test \
   -f pull_request=1
 ```
 

@@ -13,6 +13,7 @@ from session_reports import (
 )
 
 MARKER = "<!-- prototype-pr-scores:"
+ISSUE_FIELDS = {"risk": 50094621, "slop": 50094622}
 MAX_DIFF_BYTES = 200000
 RUBRIC_VERSION = 2
 WRITING_SOURCES = {
@@ -206,6 +207,21 @@ def publish(number, sha, assessment, request=api):
     current = current_pr(number, sha, request)
     require(current["base"]["sha"] == assessment["baseSha"],
             "PR base changed; refusing stale publication")
+    field_values = [{"field_id": field_id, "value": assessment[metric]["score"]}
+                    for metric, field_id in ISSUE_FIELDS.items()]
+    require(all(type(row["value"]) is int and 0 <= row["value"] <= 100
+                for row in field_values), "Invalid numeric Issue Field score")
+    saved = request(f"repos/{REPOSITORY}/issues/{number}/issue-field-values", "POST",
+                    {"issue_field_values": field_values})
+    require(isinstance(saved, list) and all(
+        sum(row.get("issue_field_id") == expected["field_id"]
+            and row.get("data_type") == "number"
+            and type(row.get("value")) is int
+            and row["value"] == expected["value"] for row in saved) == 1
+        for expected in field_values), "GitHub did not confirm the Issue Field values")
+    current = current_pr(number, sha, request)
+    require(current["base"]["sha"] == assessment["baseSha"],
+            "PR base changed after Issue Field publication")
     path = (f"repos/{REPOSITORY}/issues/comments/{comments[0]['id']}" if comments
             else f"repos/{REPOSITORY}/issues/{number}/comments")
     request(path, "PATCH" if comments else "POST", {"body": body})
@@ -237,7 +253,7 @@ def run(request=api, reviewer=copilot):
             "writingSources": WRITING_SOURCES,
             "rubricVersion": RUBRIC_VERSION,
         }
-        print("Publishing the head-bound smart-label comment.")
+        print("Publishing numeric Issue Fields and head-bound assessment history.")
         publish(number, sha, assessment, request)
         request(f"repos/{REPOSITORY}/check-runs/{check['id']}", "PATCH",
                 {"status": "completed", "conclusion": "success",

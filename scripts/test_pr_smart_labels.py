@@ -177,12 +177,16 @@ class SmartLabelTests(unittest.TestCase):
                                  "deletions": 0, "changes": 0}])
         self.assertEqual(json.loads(diff)[0]["previousPath"], "old")
 
-    def publish(self, comments=None, current=None):
+    def publish(self, comments=None, current=None, field_result=None):
         writes = []
 
         def request(path, method="GET", body=None):
             if method != "GET":
                 writes.append((path, method, body))
+                if path.endswith("/issue-field-values"):
+                    return field_result if field_result is not None else [
+                        {"issue_field_id": row["field_id"], "data_type": "number", "value": row["value"]}
+                        for row in body["issue_field_values"]]
                 return {}
             if "/comments?" in path:
                 return comments or []
@@ -193,17 +197,27 @@ class SmartLabelTests(unittest.TestCase):
 
     def test_one_comment_reused_and_no_native_github_labels_overwritten(self):
         writes = self.publish()
-        path, method, payload = writes[0]
+        fields_path, fields_method, fields_payload = writes[0]
+        self.assertTrue(fields_path.endswith("/issues/1/issue-field-values"))
+        self.assertEqual(fields_method, "POST")
+        self.assertEqual(fields_payload, {"issue_field_values": [
+            {"field_id": 50094621, "value": 35}, {"field_id": 50094622, "value": 12}]})
+        path, method, payload = writes[1]
         self.assertTrue(path.endswith("/issues/1/comments"))
         self.assertEqual(method, "POST")
         self.assertIn("| Risk | 35/100 |", payload["body"])
         comment = {"id": 9, "user": {"login": "github-actions[bot]", "type": "Bot"},
                    "body": payload["body"]}
         writes = self.publish([comment])
-        self.assertEqual(writes[0][1], "PATCH")
-        self.assertTrue(writes[0][0].endswith("/issues/comments/9"))
-        retained = labels.unique_json(writes[0][2]["body"][len(labels.MARKER):].split(" -->")[0])
+        self.assertEqual(writes[1][1], "PATCH")
+        self.assertTrue(writes[1][0].endswith("/issues/comments/9"))
+        retained = labels.unique_json(writes[1][2]["body"][len(labels.MARKER):].split(" -->")[0])
         self.assertEqual(len(retained["assessments"]), 1)
+
+    def test_unconfirmed_fields_fail_without_publishing_success_shaped_history(self):
+        for result in ([], {}, [{"issue_field_id": 50094621, "data_type": "number", "value": 99}]):
+            with self.subTest(result=result), self.assertRaisesRegex(ReportError, "did not confirm"):
+                self.publish(field_result=result)
 
     def test_human_spoof_ignored_and_stale_publication_rejected(self):
         spoof = {"user": {"login": "human", "type": "User"},
