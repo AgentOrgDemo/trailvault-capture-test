@@ -35,15 +35,17 @@ test("formats hours, minutes, and seconds", () => {
   assert.equal(result.stderr, "");
 });
 
-test("prints help successfully", () => {
-  const result = run("--help");
+test("prints help successfully for long and short flags", () => {
+  for (const flag of ["--help", "-h"]) {
+    const result = run(flag);
 
-  assert.equal(result.status, 0);
-  assert.equal(
-    result.stdout,
-    "Usage: node scripts/format-duration.mjs <whole non-negative seconds>\n",
-  );
-  assert.equal(result.stderr, "");
+    assert.equal(result.status, 0);
+    assert.equal(
+      result.stdout,
+      "Usage: node scripts/format-duration.mjs <whole non-negative seconds>\n",
+    );
+    assert.equal(result.stderr, "");
+  }
 });
 
 test("rejects invalid input", () => {

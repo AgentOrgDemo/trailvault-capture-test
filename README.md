@@ -11,10 +11,11 @@ node scripts/format-duration.mjs 65
 # 1m 5s
 ```
 
-Print usage with:
+Print usage with `--help` or its `-h` alias:
 
 ```sh
 node scripts/format-duration.mjs --help
+node scripts/format-duration.mjs -h
 ```
 
 Run its tests with:

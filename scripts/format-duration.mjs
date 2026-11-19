@@ -30,7 +30,7 @@ export function formatDuration(seconds) {
 function main(args) {
   const usage = "Usage: node scripts/format-duration.mjs <whole non-negative seconds>";
 
-  if (args.length === 1 && args[0] === "--help") {
+  if (args.length === 1 && ["--help", "-h"].includes(args[0])) {
     console.log(usage);
     return;
   }
