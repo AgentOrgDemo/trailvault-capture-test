@@ -2,6 +2,18 @@
 
 Fabricated test data only.
 
+## Format byte sizes
+
+Pass one whole, non-negative byte count using decimal digits. The formatter
+uses binary units and rounds to the nearest tenth, with ties rounded up and
+trailing decimal zeros omitted.
+
+```sh
+node scripts/format-bytes.mjs 1536
+# 1.5 KiB
+node --test scripts/test-format-bytes.mjs
+```
+
 ## HTML page previews
 
 **Preview HTML pages** runs after each same-repository PR push through **Request
