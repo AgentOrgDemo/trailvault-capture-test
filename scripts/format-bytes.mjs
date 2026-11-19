@@ -1,8 +1,12 @@
 const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
 const [input, ...extraArgs] = process.argv.slice(2);
+const usage = 'Usage: node scripts/format-bytes.mjs <non-negative integer>';
 
-if (input === undefined || /[^0-9]/.test(input) || input === '' || extraArgs.length) {
-  console.error('Usage: node scripts/format-bytes.mjs <non-negative integer>');
+if (extraArgs.length === 0 && (input === '--help' || input === '-h')) {
+  console.log(usage);
+  console.log('       node scripts/format-bytes.mjs --help | -h');
+} else if (input === undefined || /[^0-9]/.test(input) || input === '' || extraArgs.length) {
+  console.error(usage);
   process.exitCode = 1;
 } else {
   const bytes = BigInt(input);

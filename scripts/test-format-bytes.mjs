@@ -35,10 +35,22 @@ test('rounds to one decimal place and promotes at a unit boundary', () => {
 });
 
 test('rejects missing, extra, and invalid input', () => {
-  for (const args of [[], ['1', '2'], [''], ['-1'], ['1.5'], ['1e3'], ['NaN'], ['1\n']]) {
+  for (const args of [
+    [], ['1', '2'], ['--help', '1'], ['-h', '1'], [''], ['-1'], ['1.5'], ['1e3'], ['NaN'], ['1\n'],
+  ]) {
     const result = run(...args);
     assert.equal(result.status, 1);
     assert.equal(result.stdout, '');
     assert.match(result.stderr, /^Usage:/);
+  }
+});
+
+test('prints usage to stdout and exits successfully for both help flags', () => {
+  for (const flag of ['--help', '-h']) {
+    const result = run(flag);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stderr, '');
+    assert.match(result.stdout, /^Usage: .*<non-negative integer>\n/);
+    assert.match(result.stdout, /--help \| -h\n$/);
   }
 });

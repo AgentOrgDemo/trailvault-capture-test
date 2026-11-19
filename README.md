@@ -8,6 +8,8 @@ Pass one whole, non-negative byte count using decimal digits. The formatter
 uses binary units and rounds to the nearest tenth, with ties rounded up and
 trailing decimal zeros omitted.
 
+Run `node scripts/format-bytes.mjs --help` or use the `-h` alias to print usage.
+
 ```sh
 node scripts/format-bytes.mjs 1536
 # 1.5 KiB
