@@ -28,8 +28,15 @@ export function formatDuration(seconds) {
 }
 
 function main(args) {
+  const usage = "Usage: node scripts/format-duration.mjs <whole non-negative seconds>";
+
+  if (args.length === 1 && args[0] === "--help") {
+    console.log(usage);
+    return;
+  }
+
   if (args.length !== 1 || !/^(0|[1-9]\d*)$/.test(args[0])) {
-    console.error("Usage: node scripts/format-duration.mjs <whole non-negative seconds>");
+    console.error(usage);
     process.exitCode = 1;
     return;
   }

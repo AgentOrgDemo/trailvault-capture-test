@@ -11,6 +11,12 @@ node scripts/format-duration.mjs 65
 # 1m 5s
 ```
 
+Print usage with:
+
+```sh
+node scripts/format-duration.mjs --help
+```
+
 Run its tests with:
 
 ```sh
