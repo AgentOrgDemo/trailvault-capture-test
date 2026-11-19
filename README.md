@@ -2,6 +2,21 @@
 
 Fabricated test data only.
 
+## Format durations
+
+Convert a whole non-negative number of seconds to a compact duration:
+
+```sh
+node scripts/format-duration.mjs 65
+# 1m 5s
+```
+
+Run its tests with:
+
+```sh
+node --test scripts/test-format-duration.mjs
+```
+
 ## HTML page previews
 
 **Preview HTML pages** runs after each same-repository PR push through **Request
