@@ -1,8 +1,13 @@
-const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
-const [input, ...extraArgs] = process.argv.slice(2);
-const usage = 'Usage: node scripts/format-bytes.mjs <non-negative integer>';
+const args = process.argv.slice(2);
+const si = args[0] === '--si';
+const [input, ...extraArgs] = si ? args.slice(1) : args;
+const units = si
+  ? ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  : ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+const base = si ? 1000n : 1024n;
+const usage = 'Usage: node scripts/format-bytes.mjs [--si] <non-negative integer>';
 
-if (extraArgs.length === 0 && (input === '--help' || input === '-h')) {
+if (args.length === 1 && (input === '--help' || input === '-h')) {
   console.log(usage);
   console.log('       node scripts/format-bytes.mjs --help | -h');
 } else if (input === undefined || /[^0-9]/.test(input) || input === '' || extraArgs.length) {
@@ -13,10 +18,10 @@ if (extraArgs.length === 0 && (input === '--help' || input === '-h')) {
   let unit = 0;
   let divisor = 1n;
 
-  // Promote values that round to 1024 in the current unit.
-  while (unit < units.length - 1 && bytes * 10n + divisor / 2n >= 10240n * divisor) {
+  // Promote values that round to the unit base.
+  while (unit < units.length - 1 && bytes * 10n + divisor / 2n >= base * 10n * divisor) {
     unit += 1;
-    divisor *= 1024n;
+    divisor *= base;
   }
 
   const tenths = (bytes * 10n + divisor / 2n) / divisor;

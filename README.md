@@ -5,14 +5,17 @@ Fabricated test data only.
 ## Format byte sizes
 
 Pass one whole, non-negative byte count using decimal digits. The formatter
-uses binary units and rounds to the nearest tenth, with ties rounded up and
-trailing decimal zeros omitted.
+uses binary units by default. Pass `--si` before the count to use decimal units
+(powers of 1000). Both modes round to the nearest tenth, with ties rounded up
+and trailing decimal zeros omitted.
 
 Run `node scripts/format-bytes.mjs --help` or use the `-h` alias to print usage.
 
 ```sh
 node scripts/format-bytes.mjs 1536
 # 1.5 KiB
+node scripts/format-bytes.mjs --si 1500
+# 1.5 kB
 node --test scripts/test-format-bytes.mjs
 ```
 
