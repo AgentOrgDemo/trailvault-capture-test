@@ -2,6 +2,16 @@
 
 Fabricated test data only.
 
+## Format a duration
+
+Convert a nonnegative whole number of seconds to days, hours, minutes, and
+seconds. Zero-value units are omitted.
+
+```sh
+node scripts/format-duration.mjs 65
+# 1m 5s
+```
+
 ## HTML page previews
 
 **Preview HTML pages** runs after each same-repository PR push through **Request
