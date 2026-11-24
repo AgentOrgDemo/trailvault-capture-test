@@ -2,6 +2,18 @@
 
 Fabricated test data only.
 
+## Format byte counts
+
+Pass one nonnegative whole byte count as decimal digits. The script uses binary
+units through YiB and rounds to one decimal place when needed.
+
+```console
+$ node scripts/format-bytes.mjs 1536
+1.5 KiB
+```
+
+Run the formatter tests with `node --test scripts/test-format-bytes.mjs`.
+
 ## HTML page previews
 
 **Preview HTML pages** runs after each same-repository PR push through **Request
