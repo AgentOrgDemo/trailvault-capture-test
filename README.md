@@ -2,6 +2,18 @@
 
 Fabricated test data only.
 
+## Format a duration
+
+Pass a nonnegative whole number of seconds to the dependency-free Node.js CLI:
+
+```sh
+node scripts/format-duration.mjs 65
+# 1m 5s
+```
+
+The output uses days, hours, minutes, and seconds, omitting zero-value units.
+Run its focused tests with `node --test scripts/test-format-duration.mjs`.
+
 ## HTML page previews
 
 **Preview HTML pages** runs after each same-repository PR push through **Request
